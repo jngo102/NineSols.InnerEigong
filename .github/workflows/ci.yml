@@ -90,10 +90,9 @@ jobs:
             PLUGINS_PATH=BepInEx/BepInEx/plugins
             mkdir -p $PLUGINS_PATH
             ARTIFACT_PATH=${{ env.MOD_NAME }}
-            ls -la
             mv $ARTIFACT_PATH.dll $ARTIFACT_PATH.pdb ReadMe.md $PLUGINS_PATH
             cd BepInEx
-            ZIP_FILE=${{ needs.release.outputs.mod_path }}_${{ matrix.os.suffix }}.zip
+            ZIP_FILE=${{ env.MOD_NAME }}_${{ matrix.os.suffix }}.zip
             zip -r $ZIP_FILE *
             echo "zipfile=BepInEx/$ZIP_FILE" >> $GITHUB_OUTPUT
 
