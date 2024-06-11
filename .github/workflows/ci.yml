@@ -24,7 +24,9 @@ jobs:
         run: sudo apt install -y nuget mono-devel
 
       - name: Get References
-        run: wget https://files.catbox.moe/9js0vc.zip -O References.zip
+        run: |
+          wget https://files.catbox.moe/9js0vc.zip -O References.zip
+          unzip References.zip -d References
 
       - name: Restore packages
         run: dotnet restore
