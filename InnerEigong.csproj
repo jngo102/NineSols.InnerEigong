@@ -5,7 +5,7 @@
 		<AssemblyName>InnerEigong</AssemblyName>
 		<Description>Makes the true final boss of Nine Sols more difficult.</Description>
 		<Copyright>Copyright © 2024 jngo102</Copyright>
-		<Version>0.0.0</Version>
+		<Version>0.0.1</Version>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<LangVersion>latest</LangVersion>
 		<RestoreAdditionalProjectSources>

@@ -6,13 +6,16 @@ on:
   pull_request:
 
 env:
+  ARTIFACT_NAME: build-artifact
   MOD_NAME: InnerEigong
-
+  MOD_PATH_NO_EXT: MOD_PATH_NO_EXT=bin/Release/net48/$MOD_NAME
 
 jobs:
   release:
     name: Create release
     runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,6 +33,13 @@ jobs:
 
       - name: Build project
         run: dotnet build --configuration Release
+
+      - name: Upload artifact
+        id: upload_artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: $ARTIFACT_NAME
+          path: $MOD_PATH_NO_EXT.*
 
       - name: Get Assembly version
         id: get_version
@@ -60,23 +70,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
           
-      - name: Setup MSBuild
-        run: sudo apt install -y nuget mono-devel
-
-      - name: Get References
-        run: |
-          wget https://files.catbox.moe/9js0vc.zip -O References.zip
-          unzip References.zip -d References
-
-      - name: Restore packages
-        run: dotnet restore
-
-      - name: Build project
-        run: dotnet build --configuration Release
-
-      - name: Get Assembly version
-        id: get_version
-        run: echo "version=$(cat Version.txt)" >> $GITHUB_OUTPUT
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: $ARTIFACT_NAME
 
       - name: Package with BepInEx
         id: package
@@ -86,8 +83,8 @@ jobs:
             unzip BepInEx.zip -d BepInEx
             PLUGINS_PATH=BepInEx/BepInEx/plugins
             mkdir -p $PLUGINS_PATH
-            MOD_PATH_NO_EXT=bin/Release/net48/$MOD_NAME
-            mv $MOD_PATH_NO_EXT.dll $MOD_PATH_NO_EXT.pdb ReadMe.md $PLUGINS_PATH
+            ARTIFACT_PATH=$ARTIFACT_NAME/$MOD_PATH_NO_EXT
+            mv $ARTIFACT_PATH.dll $ARTIFACT_PATH.pdb ReadMe.md $PLUGINS_PATH
             cd BepInEx
             ZIP_FILE=$MOD_NAME_${{ matrix.os.suffix }}.zip
             zip -r $ZIP_FILE *
@@ -98,7 +95,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ needs.release.outputs.upload_url }}
           asset_path: ${{ steps.package.outputs.zipfile }}
           asset_name: ${{ steps.package.outputs.zipfile }}
           asset_content_type: application/zip
