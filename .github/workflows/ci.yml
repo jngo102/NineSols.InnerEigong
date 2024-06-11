@@ -8,7 +8,7 @@ on:
 env:
   ARTIFACT_NAME: build-artifact
   MOD_NAME: InnerEigong
-  MOD_PATH_NO_EXT: MOD_PATH_NO_EXT=bin/Release/net48/$MOD_NAME
+  MOD_PATH_NO_EXT: bin/Release/net48/$MOD_NAME
 
 jobs:
   release:
@@ -39,7 +39,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: $ARTIFACT_NAME
-          path: $MOD_PATH_NO_EXT.*
+          path: ${MOD_PATH_NO_EXT}.*
 
       - name: Get Assembly version
         id: get_version
@@ -86,7 +86,7 @@ jobs:
             ARTIFACT_PATH=$ARTIFACT_NAME/$MOD_PATH_NO_EXT
             mv $ARTIFACT_PATH.dll $ARTIFACT_PATH.pdb ReadMe.md $PLUGINS_PATH
             cd BepInEx
-            ZIP_FILE=$MOD_NAME_${{ matrix.os.suffix }}.zip
+            ZIP_FILE=${MOD_NAME_NO_EXT}_${{ matrix.os.suffix }}.zip
             zip -r $ZIP_FILE *
             echo "zipfile=BepInEx/$ZIP_FILE" >> $GITHUB_OUTPUT
 
