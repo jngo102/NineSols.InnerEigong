@@ -40,7 +40,7 @@ jobs:
 
       - name: Get file paths
         id: file_paths
-        run: echo "paths=$(ls ${{ steps.gen_mod_path.outputs.path }}.*)" >> $GITHUB_OUTPUT 
+        run: echo "paths=$(echo $(ls ${{ steps.gen_mod_path.outputs.path }}.*))" >> $GITHUB_OUTPUT 
 
       - name: Upload artifact
         id: upload_artifact
