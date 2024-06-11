@@ -8,7 +8,6 @@ on:
 env:
   ARTIFACT_NAME: build-artifact
   MOD_NAME: InnerEigong
-  MOD_PATH_NO_EXT: bin/Release/net48/$MOD_NAME
 
 jobs:
   release:
@@ -16,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
+      mod_path: ${{ steps.gen_mod_path.outputs.path }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,15 +34,19 @@ jobs:
       - name: Build project
         run: dotnet build --configuration Release
 
+      - name: Generate mod path
+        id: gen_mod_path
+        run: echo "path=bin/Release/net48/${{ env.MOD_NAME }}" >> $GITHUB_OUTPUT
+
       - name: Get file paths
         id: file_paths
-        run: echo "paths=$(ls $MOD_PATH_NO_EXT.*)" >> $GITHUB_OUTPUT 
+        run: echo "paths=$(ls ${{ steps.gen_mod_path.outputs.path }}.*)" >> $GITHUB_OUTPUT 
 
       - name: Upload artifact
         id: upload_artifact
         uses: actions/upload-artifact@v4
         with:
-          name: $ARTIFACT_NAME
+          name: ${{ env.ARTIFACT_NAME }}
           path: ${{ steps.file_paths.outputs.paths }}
 
       - name: Get Assembly version
@@ -77,7 +81,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: $ARTIFACT_NAME
+          name: ${{ env.ARTIFACT_NAME }}
 
       - name: Package with BepInEx
         id: package
@@ -87,10 +91,10 @@ jobs:
             unzip BepInEx.zip -d BepInEx
             PLUGINS_PATH=BepInEx/BepInEx/plugins
             mkdir -p $PLUGINS_PATH
-            ARTIFACT_PATH=$ARTIFACT_NAME/$MOD_PATH_NO_EXT
+            ARTIFACT_PATH=${{ env.ARTIFACT_NAME }}/${{ needs.release.outputs.mod_path }}
             mv $ARTIFACT_PATH.dll $ARTIFACT_PATH.pdb ReadMe.md $PLUGINS_PATH
             cd BepInEx
-            ZIP_FILE=${MOD_NAME_NO_EXT}_${{ matrix.os.suffix }}.zip
+            ZIP_FILE=${{ needs.release.outputs.mod_path }}_${{ matrix.os.suffix }}.zip
             zip -r $ZIP_FILE *
             echo "zipfile=BepInEx/$ZIP_FILE" >> $GITHUB_OUTPUT
 
