@@ -89,7 +89,8 @@ jobs:
             unzip BepInEx.zip -d BepInEx
             PLUGINS_PATH=BepInEx/BepInEx/plugins
             mkdir -p $PLUGINS_PATH
-            mv ${{ needs.release.outputs.mod_path }}.dll ${{ needs.release.outputs.mod_path }}.pdb ReadMe.md $PLUGINS_PATH
+            ARTIFACT_PATH=${{ env.ARTIFACT_NAME }}/${{ env.MOD_NAME }}
+            mv $ARTIFACT_PATH.dll $ARTIFACT_PATH.pdb ReadMe.md $PLUGINS_PATH
             cd BepInEx
             ZIP_FILE=${{ needs.release.outputs.mod_path }}_${{ matrix.os.suffix }}.zip
             zip -r $ZIP_FILE *
