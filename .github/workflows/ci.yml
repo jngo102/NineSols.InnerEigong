@@ -50,11 +50,12 @@ jobs:
             unzip BepInEx.zip -d BepInEx
             PLUGINS_PATH=BepInEx/BepInEx/plugins
             mkdir -p $PLUGINS_PATH
+            pwd
             ls -la .
             ls -la bin
             ls -la bin/Release
             ls -la bin/Release/net48
-            MOD_PATH_NO_EXT=bin/Release/net48/${{ steps.get_name.outputs.name }}
+            MOD_PATH_NO_EXT=$(pwd)/bin/Release/net48/${{ steps.get_name.outputs.name }}
             mv $MOD_PATH_NO_EXT.dll $MOD_PATH_NO_EXT.pdb ReadMe.md $PLUGINS_PATH
             cd BepInEx
             ZIP_FILE=${{ steps.get_name.outputs.name }}_${{ matrix.os.suffix }}.zip
