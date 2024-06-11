@@ -34,12 +34,16 @@ jobs:
       - name: Build project
         run: dotnet build --configuration Release
 
+      - name: Get file paths
+        id: file_paths
+        run: echo "paths=$(ls $MOD_PATH_NO_EXT.*)" >> $GITHUB_OUTPUT 
+
       - name: Upload artifact
         id: upload_artifact
         uses: actions/upload-artifact@v4
         with:
           name: $ARTIFACT_NAME
-          path: ${MOD_PATH_NO_EXT}.*
+          path: ${{ steps.file_paths.outputs.paths }}
 
       - name: Get Assembly version
         id: get_version
