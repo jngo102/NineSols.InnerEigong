@@ -1,0 +1,85 @@
+name: Build and Release
+
+on:
+  push:
+    branches: main
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os:
+          [
+            { version: windows-latest, suffix: Windows, filter: win },
+            { version: macos-latest, suffix: macOS, filter: macos },
+          ]
+    name: Build and create release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+          
+      - name: Setup MSBuild Windows
+        if: matrix.os.suffix == 'Windows'
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup MSBuild OSX
+        if: matrix.os.suffix == 'OSX'
+        run: |
+          brew install --overwrite --dry-run nuget
+          brew install --overwrite --dry-run mono
+
+      - name: Get References
+        run: wget https://files.catbox.moe/9js0vc.zip -O References.zip
+
+      - name: Restore packages
+        run: dotnet restore
+
+      - name: Build project
+        run: dotnet build --configuration Release
+
+      - name: Get Assembly name
+        id: get_name
+        run: echo "name=$(cat < Name.txt)" >> $GITHUB_OUTPUT
+
+      - name: Get Assembly version
+        id: get_version
+        run: echo "version=$(cat < Version.txt)" >> $GITHUB_OUTPUT
+
+      - name: Package with BepInEx
+        id: package
+        run: |
+            DOWNLOAD_URL=$(curl --request GET https://api.github.com/repos/BepInEx/BepInEx/releases/latest | jq -r '.assets[] | select(.name | contains("${{ matrix.os.filter }}_x64")) | .browser_download_url')
+            wget $DOWNLOAD_URL -O BepInEx.zip
+            unzip BepInEx.zip -d BepInEx
+            PLUGINS_PATH=BepInEx/BepInEx/plugins
+            mkdir -p $PLUGINS_PATH
+            mv bin/Release/net48/${{ steps.get_name.outputs.name }}.* $PLUGINS_PATH
+            mv ReadMe.md $PLUGINS_PATH
+            cd BepInEx
+            ZIP_FILE=${{ steps.get_name.outputs.name }}_${{ matrix.os.suffix }}.zip
+            zip -r $ZIP_FILE *
+            echo "zipfile=BepInEx/$ZIP_FILE" >> $GITHUB_OUTPUT
+
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          release_name: Release v${{ steps.get_version.outputs.version }}
+          body_path: ChangeLog.md
+          draft: false
+          prerelease: false
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.package.outputs.zipfile }}
+          asset_name: ${{ steps.package.outputs.zipfile }}
+          asset_content_type: application/zip
