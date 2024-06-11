@@ -5,7 +5,7 @@
 		<AssemblyName>InnerEigong</AssemblyName>
 		<Description>Makes the true final boss of Nine Sols more difficult.</Description>
 		<Copyright>Copyright © 2024 jngo102</Copyright>
-		<Version>0.0.1</Version>
+		<Version>0.0.2</Version>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<LangVersion>latest</LangVersion>
 		<RestoreAdditionalProjectSources>
@@ -32,7 +32,6 @@
 	</PropertyGroup>
 
 	<Target Condition="'$(Configuration)' == 'Release'" Name="PublishVersion" AfterTargets="PostBuildEvent">
-		<WriteLinesToFile File="Name.txt" Lines="$(AssemblyName)" Overwrite="true" Encoding="UTF-8" />
 		<WriteLinesToFile File="Version.txt" Lines="$(AssemblyVersion)" Overwrite="true" Encoding="UTF-8" />
 	</Target>
 
