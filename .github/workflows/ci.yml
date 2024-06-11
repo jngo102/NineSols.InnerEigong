@@ -36,11 +36,11 @@ jobs:
 
       - name: Get Assembly name
         id: get_name
-        run: echo "name=$(cat < Name.txt)" >> $GITHUB_OUTPUT
+        run: echo "name=$(cat Name.txt)" >> $GITHUB_OUTPUT
 
       - name: Get Assembly version
         id: get_version
-        run: echo "version=$(cat < Version.txt)" >> $GITHUB_OUTPUT
+        run: echo "version=$(cat Version.txt)" >> $GITHUB_OUTPUT
 
       - name: Package with BepInEx
         id: package
@@ -55,7 +55,7 @@ jobs:
             ls -la bin
             ls -la bin/Release
             ls -la bin/Release/net48
-            MOD_PATH_NO_EXT=$(pwd)/bin/Release/net48/${{ steps.get_name.outputs.name }}
+            MOD_PATH_NO_EXT=$(pwd)/bin/Release/net48/InnerEigong
             mv $MOD_PATH_NO_EXT.dll $MOD_PATH_NO_EXT.pdb ReadMe.md $PLUGINS_PATH
             cd BepInEx
             ZIP_FILE=${{ steps.get_name.outputs.name }}_${{ matrix.os.suffix }}.zip

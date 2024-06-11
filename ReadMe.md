@@ -1,3 +1,3 @@
 # Inner Eigong
 
-Mods the final boss of Nine Sols to be more difficult.
+Mods the true final boss of Nine Sols to be more difficult.
