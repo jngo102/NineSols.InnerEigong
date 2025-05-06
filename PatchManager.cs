@@ -2,6 +2,7 @@
 using System.Reflection;
 
 namespace InnerEigong;
+
 /// <summary>
 /// Handles patching and unpatching of methods in the main Assembly.
 /// </summary>
@@ -20,7 +21,7 @@ internal static class PatchManager {
     }
 
     /// <summary>
-    /// Unpatch all methods patched by BossRushPatches in the Harmony instance.
+    /// Unpatch all methods patched by InnerEigongPatches in the Harmony instance.
     /// </summary>
     public static void Unpatch() {
         var methodInfos = typeof(InnerEigongPatches).GetMethods(BindingFlags.Static | BindingFlags.NonPublic);

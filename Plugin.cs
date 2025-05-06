@@ -1,4 +1,11 @@
 ﻿using BepInEx;
+using Cysharp.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using UnityEngine;
+using SceneManager = UnityEngine.SceneManagement.SceneManager;
 
 namespace InnerEigong;
 
@@ -14,6 +21,33 @@ public class Plugin : BaseUnityPlugin {
         Instance = this;
         PatchManager.Initialize();
     }
+
+#if DEBUG
+    private void Start() {
+        const string bossScene = "A11_S0_Boss_YiGung";
+        SceneManager.sceneLoaded += async (scene, _) => {
+            switch (scene.name) {
+                case "Logo":
+                    while (SceneManager.GetActiveScene().name == "Logo") {
+                        SkippableManager.Instance.TrySkip();
+                    }
+
+                    break;
+                case "TitleScreenMenu":
+                    StartMenuLogic.Instance.StartMemoryChallenge();
+                    break;
+                case bossScene:
+                    SkippableManager.Instance.TrySkip();
+                    break;
+                default:
+                    var gameCore = GameCore.Instance;
+                    await UniTask.WaitUntil(() => gameCore.currentCoreState == GameCore.GameCoreState.Playing);
+                    gameCore.GoToScene(bossScene);
+                    break;
+            }
+        };
+    }
+#endif
 
     /// <summary>
     /// Log a message; for developer use.
