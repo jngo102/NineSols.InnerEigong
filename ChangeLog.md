@@ -1,5 +1,11 @@
 # Inner Eigong Change Log
 
+## [0.2.0] - 2025-05-05
+
+### Added
+
+- Phantoms
+
 ## [0.0.2] - 2024-06-11
 
 ### Added
