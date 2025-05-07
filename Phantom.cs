@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Reflection;
 using Cysharp.Threading.Tasks;
 using System.Threading;
@@ -27,7 +26,6 @@ internal class Phantom : MonoBehaviour {
         _monster = GetComponent<StealthGameMonster>();
         _monster.EnterLevelAwake();
         _monster.EnterLevelReset();
-        _monster.fsm.Changed += OnStateChange;
 
         foreach (var rend in GetComponentsInChildren<SpriteRenderer>()) {
             if (rend.name.Contains("Shadow")) continue;
@@ -38,10 +36,14 @@ internal class Phantom : MonoBehaviour {
         _monster.Hide();
     }
 
-    private void OnStateChange(MonsterBase.States state) { }
-
     private MonsterBase.States _currentState;
 
+    /// <summary>
+    /// Spawn the Eigong phantom at Eigong's position.
+    /// </summary>
+    /// <param name="refMonster">The original Eigong's monster component.</param>
+    /// <param name="spawnCancelToken">A cancellation token that can stop the async task.</param>
+    /// <param name="spawnDelaySeconds">The duration before when the clone actually spawns.</param>
     internal async UniTask Spawn(StealthGameMonster refMonster, CancellationToken spawnCancelToken,
         float spawnDelaySeconds = 0.25f) {
         transform.position = refMonster.transform.position;

@@ -1,6 +1,6 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System.Reflection;
+using Cysharp.Threading.Tasks;
 using MonsterLove.StateMachine;
-using System.Reflection;
 using UnityEngine;
 using States = MonsterBase.States;
 
@@ -13,8 +13,6 @@ internal class Eigong : MonoBehaviour {
     private StealthGameMonster _monster;
 
     private void Awake() {
-        //SpriteManager.Initialize("Boss_YiGung_");
-
         _monster = GetComponent<StealthGameMonster>();
         _monster.OverrideWanderingIdleTime(0); 
         _monster.StartingPhaseIndex = 1;
@@ -41,13 +39,10 @@ internal class Eigong : MonoBehaviour {
         // var anim = _monster.animator;
         // var clips = anim.runtimeAnimatorController.animationClips;
         // var tex = Texture2D.whiteTexture;
-        // var spriteCurve = new AnimationCurve(
-        //     new Keyframe(0.25f, Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), Vector2.one * 0.5f)),
-        //     new Keyframe(0.5f, 1)
-        // );
+        // var spriteCurve = AnimationCurve.Constant(0, 1, Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), Vector2.one * 0.5f)));
         //
         // foreach (var clip in clips) {
-        //     clip.SetCurve("MonsterCore/Animator(Proxy)/Animator", typeof(SpriteRenderer), "sprite", spriteCurve);
+        //     clip.SetCurve("MonsterCore/Animator(Proxy)/Animator", typeof(SpriteRenderer), nameof(SpriteRenderer.sprite), spriteCurve);
         // }
         // var events =
         //     clips[0].GetEventsInternal(); //;SetCurve("MonsterCore/Animator(Proxy)/Animator", typeof(SpriteRenderer), "sprite", );
@@ -91,7 +86,7 @@ internal class Eigong : MonoBehaviour {
         var teleportToBigWhiteFlash = _monster.GetState(States.Attack2);
         var issenSlash = _monster.GetState(States.Attack3);
         var uppercutToWhiteSlash = _monster.GetState(States.Attack4);
-        var teleportX = _monster.GetState(States.Attack5);
+        var teleportBack = _monster.GetState(States.Attack5);
         var slowStartTrailingCombo = _monster.GetState(States.Attack6);
         var teleportToSlowStartTrailingCombo = _monster.GetState(States.Attack7);
         var sheathToRedWhiteWhite = _monster.GetState(States.Attack8);
@@ -107,7 +102,36 @@ internal class Eigong : MonoBehaviour {
         var farTeleportToChargeTalisman= _monster.GetState(States.Attack18);
         var teleportToBigRedCut = _monster.GetState(States.Attack19);
         var bigWhiteFlash = _monster.GetState(States.Attack20);
+        
+        foreach (var groupSequence in GetComponentsInChildren<MonsterStateGroupSequence>(true)) {
+            var attackSequences = groupSequence.AttackSequence;
+            foreach (var attackSequence in attackSequences) {
+                attackSequence.setting.queue = [slowStartFullCombo, issenSlash, redWhiteWhite];   
+            }
+            groupSequence.AttackSequence = attackSequences;
+        }
 
+        var attackSequencer = _monster.monsterCore.attackSequenceMoodule;
+        var phaseSequencesField = attackSequencer.GetType()
+            .GetField("SequenceForDifferentPhase", BindingFlags.Instance | BindingFlags.NonPublic);
+        if (phaseSequencesField != null) {
+            var phaseSequences = (MonsterStateSequenceWeight[])phaseSequencesField.GetValue(attackSequencer);
+            foreach (var phaseSequence in phaseSequences) {
+                foreach (var groupSequence in phaseSequence.setting.queue) {
+                    var attackSequences = groupSequence.AttackSequence;
+                    foreach (var attackSequence in attackSequences) {
+                        var setting = attackSequence.setting;
+                        setting.queue = [slowStartFullCombo, issenSlash, redWhiteWhite];
+                        attackSequence.setting = setting;
+                    }
+
+                    groupSequence.AttackSequence = attackSequences;
+                }
+            }    
+            phaseSequencesField.SetValue(attackSequencer, phaseSequences);
+        }
+        
+        
         ModifyStates();
     }
 
