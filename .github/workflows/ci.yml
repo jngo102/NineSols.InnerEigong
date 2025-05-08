@@ -60,8 +60,11 @@ jobs:
           cmd_output=$(grep --only-matching --perl-regexp "$query_regex" ChangeLog.md)
           echo "$(echo "$CMD_OUTPUT" | head -2)" > temp.txt
           start=$(cat temp.txt | head -1 | sed --expression 's/[]\/$*.^[]/\\&/g')
+          echo "Start: $start"
           end=$(cat temp.txt | tail -1 | sed --expression 's/[]\/$*.^[]/\\&/g')
+          echo "End: $end"
           body=$(awk "/$start/,/$end/ { print }" ChangeLog.md | head -n -1)
+          echo "Body: $body"
           echo 'body<<EOF' >> $GITHUB_OUTPUT
           echo "$body" >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
