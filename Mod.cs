@@ -1,4 +1,4 @@
-﻿using System.Linq;
+﻿using System;
 using BepInEx;
 using Cysharp.Threading.Tasks;
 using RCGFSM.Animation;
@@ -17,7 +17,7 @@ public class Mod : BaseUnityPlugin {
 
     private void Awake() {
         _instance = this;
-        PatchManager.Initialize();
+        PatchManager.Patch();
     }
 
 #if DEBUG
@@ -25,22 +25,26 @@ public class Mod : BaseUnityPlugin {
         // Load Eigong scene immediately on game start
         RuntimeInitHandler.LoadCore();
         GameConfig.Instance.InstantiateGameCore();
-        await UniTask.WaitUntil(() => SaveManager.Instance != null);
+        await UniTask.WaitUntil(() => SaveManager.Instance);
         var saveManager = SaveManager.Instance;
         saveManager.SavePlayerPref();
         await saveManager.LoadSaveAtSlot(4);
         await SceneManager.LoadSceneAsync(Constants.BossSceneName);
         // Skip the boss intro cutscene
         var fsmObj = GameObject.Find("General Boss Fight FSM Object Variant");
-        var fsmOwner = fsmObj.GetComponent<StateMachineOwner>();
+        var fsmOwner = fsmObj.TryGetComp<StateMachineOwner>();
         var fsmContext = fsmOwner.FsmContext;
-        await UniTask.WaitUntil(() => fsmContext.currentStateType != null);
+        await UniTask.WaitUntil(() => fsmContext.currentStateType);
         var playAction = fsmContext.currentStateType.GetComponentInChildren<CutScenePlayAction>(true);
         if (playAction.cutscene is SimpleCutsceneManager cutsceneManager) {
             cutsceneManager.TrySkip();
         }
     }
 #endif
+
+    private void OnApplicationQuit() {
+        PatchManager.Unpatch();
+    }
 
     /// <summary>
     /// Log a message; for developer use.

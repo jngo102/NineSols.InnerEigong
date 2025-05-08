@@ -6,7 +6,10 @@ using UObj = UnityEngine.Object;
 
 namespace InnerEigong;
 
-internal static class CloneManager {
+/// <summary>
+/// Manages the phantom clone of a monster.
+/// </summary>
+internal static class PhantomManager {
     private static Phantom _phantom;
 
     internal static void Initialize(GameObject refObj) {
@@ -16,7 +19,7 @@ internal static class CloneManager {
 
     private static CancellationTokenSource _spawnCancelSrc;
 
-    internal static async UniTask SpawnPhantom(StealthGameMonster refMonster, float spawnDelaySec = 0.25f) {
+    internal static async UniTask SpawnPhantom(MonsterBase refMonster, float spawnDelaySec = 0.25f) {
         if (_spawnCancelSrc == null) {
             _spawnCancelSrc = new CancellationTokenSource();
             try {

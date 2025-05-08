@@ -13,9 +13,9 @@ internal static class PatchManager {
     private static Harmony _harmony;
 
     /// <summary>
-    /// Initialize the patch manager.
+    /// Initialize all patches.
     /// </summary>
-    public static void Initialize() {
+    public static void Patch() {
         _harmony = new Harmony(MyPluginInfo.PLUGIN_GUID);
         _harmony.PatchAll(typeof(InnerEigongPatches));
     }

@@ -1,9 +1,8 @@
-﻿using System;
-using System.Runtime.CompilerServices;
-using Cysharp.Threading.Tasks;
+﻿using Cysharp.Threading.Tasks;
 using HarmonyLib;
 using I2.Loc;
-using UnityEngine;
+
+// ReSharper disable InconsistentNaming
 
 namespace InnerEigong;
 
@@ -18,12 +17,15 @@ internal class InnerEigongPatches {
     [HarmonyPatch(typeof(StealthGameMonster), "Awake")]
     private static void CheckForEigong(StealthGameMonster __instance) {
         if (__instance.gameObject.name != Constants.BossName) return;
-        CloneManager.Initialize(__instance.gameObject);
+        PhantomManager.Initialize(__instance.gameObject);
         __instance.AddComp(typeof(Eigong));
         // __instance.AddComp(typeof(FireTrail));
         // SpriteManager.Initialize(Constants.BossSpritePrefix).Forget();
     }
 
+    /// <summary>
+    /// Spawn a phantom on certain attacks.
+    /// </summary>
     [HarmonyPostfix]
     [HarmonyPatch(typeof(MonsterBase), nameof(MonsterBase.ChangeStateIfValid), typeof(MonsterBase.States),
         typeof(MonsterBase.States))]
@@ -38,7 +40,7 @@ internal class InnerEigongPatches {
             state is MonsterBase.States.Attack1 or MonsterBase.States.Attack3 or MonsterBase.States.Attack4
                 or MonsterBase.States.Attack6 or MonsterBase.States.Attack12 or MonsterBase.States.Attack13
                 or MonsterBase.States.Attack18) {
-            CloneManager.SpawnPhantom(refMonster).Forget();
+            PhantomManager.SpawnPhantom(refMonster).Forget();
         }
     }
 
@@ -64,7 +66,7 @@ internal class InnerEigongPatches {
         __result = LocalizationManager.CurrentLanguageCode switch {
             "de-DE" => __result,
             "en-US" => $"Inner {__result}",
-            "es-US" or "es-ES" => $"{__result} interior",
+            "es-ES" or "es-US" => $"{__result} interior",
             "fr-FR  " => $"{__result}, Vision",
             "it" => $"{__result} interiore",
             "ja" => $"心中の{__result}",

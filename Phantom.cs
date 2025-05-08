@@ -6,9 +6,12 @@ using UnityEngine;
 
 namespace InnerEigong;
 
+/// <summary>
+/// Represents an enemy doppelgänger that attacks alongside the actual boss.
+/// </summary>
 internal class Phantom : MonoBehaviour {
-    private StealthGameMonster _monster;
-
+    private MonsterBase _monster;
+    
     private void Awake() {
         var guid = gameObject.GetGuidComponent();
         var guidType = guid.GetType();
@@ -23,7 +26,7 @@ internal class Phantom : MonoBehaviour {
 
         AutoAttributeManager.AutoReferenceAllChildren(gameObject);
 
-        _monster = GetComponent<StealthGameMonster>();
+        TryGetComponent(out _monster);
         _monster.EnterLevelAwake();
         _monster.EnterLevelReset();
 
@@ -32,19 +35,19 @@ internal class Phantom : MonoBehaviour {
             rend.TryGetCompOrAdd<_2dxFX_ColorRGB>();
             rend.TryGetCompOrAdd<_2dxFX_Negative>();
         }
-
+        
         _monster.Hide();
     }
 
     private MonsterBase.States _currentState;
 
     /// <summary>
-    /// Spawn the Eigong phantom at Eigong's position.
+    /// Fade in the phantom at Eigong's position.
     /// </summary>
     /// <param name="refMonster">The original Eigong's monster component.</param>
     /// <param name="spawnCancelToken">A cancellation token that can stop the async task.</param>
     /// <param name="spawnDelaySeconds">The duration before when the clone actually spawns.</param>
-    internal async UniTask Spawn(StealthGameMonster refMonster, CancellationToken spawnCancelToken,
+    internal async UniTask Spawn(MonsterBase refMonster, CancellationToken spawnCancelToken,
         float spawnDelaySeconds = 0.25f) {
         transform.position = refMonster.transform.position;
         _currentState = refMonster.CurrentState;
@@ -71,6 +74,10 @@ internal class Phantom : MonoBehaviour {
         await DeSpawn();
     }
 
+    /// <summary>
+    /// Fade out the phantom.
+    /// </summary>
+    /// <param name="fadeTimeSec">The duration to fade out for.</param>
     internal async UniTask DeSpawn(float fadeTimeSec = 0.25f) {
         float alpha = 1;
         float fadeStartTime = Time.timeSinceLevelLoad;

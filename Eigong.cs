@@ -13,7 +13,7 @@ internal class Eigong : MonoBehaviour {
     private StealthGameMonster _monster;
 
     private void Awake() {
-        _monster = GetComponent<StealthGameMonster>();
+        TryGetComponent(out _monster);
         _monster.OverrideWanderingIdleTime(0); 
         _monster.StartingPhaseIndex = 1;
 
