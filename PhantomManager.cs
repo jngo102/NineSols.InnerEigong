@@ -36,7 +36,7 @@ internal static class PhantomManager {
                 await _phantom.Spawn(refMonster, _spawnCancelSrc.Token, spawnDelaySec);
             }
             catch (OperationCanceledException) {
-                await _phantom.DeSpawn();
+                await _phantom.DeSpawn(_spawnCancelSrc.Token);
             }
             finally {
                 _spawnCancelSrc = null;
