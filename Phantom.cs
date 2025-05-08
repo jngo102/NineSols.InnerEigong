@@ -39,23 +39,21 @@ internal class Phantom : MonoBehaviour {
         _monster.Hide();
     }
 
-    private MonsterBase.States _currentState;
-
     /// <summary>
     /// Fade in the phantom at Eigong's position.
     /// </summary>
     /// <param name="refMonster">The original Eigong's monster component.</param>
-    /// <param name="spawnCancelToken">A cancellation token that can stop the async task.</param>
+    /// <param name="spawnCancelToken">A cancellation token that can stop the spawn task.</param>
     /// <param name="spawnDelaySeconds">The duration before when the clone actually spawns.</param>
     internal async UniTask Spawn(MonsterBase refMonster, CancellationToken spawnCancelToken,
         float spawnDelaySeconds = 0.25f) {
         transform.position = refMonster.transform.position;
-        _currentState = refMonster.CurrentState;
+        var currentState = refMonster.CurrentState;
         await UniTask.Delay(TimeSpan.FromSeconds(spawnDelaySeconds), cancellationToken: spawnCancelToken);
         _monster.Show();
         _monster.health.SetReceiversActivate(false);
         _monster.health.BecomeInvincible(_monster);
-        _monster.ChangeStateIfValid(_currentState);
+        _monster.ChangeStateIfValid(currentState);
         var fadeStartTime = Time.timeSinceLevelLoad;
         float alpha = 0;
         await UniTask.WaitUntil(() => {
@@ -70,15 +68,16 @@ internal class Phantom : MonoBehaviour {
             alpha = (Time.timeSinceLevelLoad - fadeStartTime) / spawnDelaySeconds;
             return alpha >= 1;
         }, cancellationToken: spawnCancelToken);
-        await UniTask.WaitUntil(() => _monster.CurrentState != _currentState, cancellationToken: spawnCancelToken);
+        await UniTask.WaitUntil(() => _monster.CurrentState != currentState, cancellationToken: spawnCancelToken);
         await DeSpawn();
     }
 
     /// <summary>
     /// Fade out the phantom.
     /// </summary>
+    /// <param name="fadeCancelToken">A cancellation token that may stop this fade out routine.</param>
     /// <param name="fadeTimeSec">The duration to fade out for.</param>
-    internal async UniTask DeSpawn(float fadeTimeSec = 0.25f) {
+    internal async UniTask DeSpawn(CancellationToken fadeCancelToken, float fadeTimeSec = 0.25f) {
         float alpha = 1;
         float fadeStartTime = Time.timeSinceLevelLoad;
         await UniTask.WaitUntil(() => {
@@ -92,7 +91,7 @@ internal class Phantom : MonoBehaviour {
 
             alpha = 1 - (Time.timeSinceLevelLoad - fadeStartTime) / fadeTimeSec;
             return alpha <= 0;
-        });
+        }, cancellationToken: fadeCancelToken);
         _monster.Hide();
     }
 }
