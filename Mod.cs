@@ -1,5 +1,4 @@
-﻿using System;
-using BepInEx;
+﻿using BepInEx;
 using Cysharp.Threading.Tasks;
 using RCGFSM.Animation;
 using UnityEngine;
