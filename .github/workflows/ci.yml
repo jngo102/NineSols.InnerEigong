@@ -58,7 +58,9 @@ jobs:
         run: |
           query_regex="^## \[[0-9]*\.[0-9]*\.[0-9]*\] - [0-9]{4}-[0-9]{2}-[0-9]{2}$"
           cmd_output=$(grep --only-matching --perl-regexp "$query_regex" ChangeLog.md)
+          echo "CMD out: $cmd_output"
           echo "$(echo "$CMD_OUTPUT" | head -2)" > temp.txt
+          cat temp.txt
           start=$(cat temp.txt | head -1 | sed --expression 's/[]\/$*.^[]/\\&/g')
           echo "Start: $start"
           end=$(cat temp.txt | tail -1 | sed --expression 's/[]\/$*.^[]/\\&/g')
