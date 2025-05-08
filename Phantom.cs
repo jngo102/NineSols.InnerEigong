@@ -69,7 +69,7 @@ internal class Phantom : MonoBehaviour {
             return alpha >= 1;
         }, cancellationToken: spawnCancelToken);
         await UniTask.WaitUntil(() => _monster.CurrentState != currentState, cancellationToken: spawnCancelToken);
-        await DeSpawn();
+        await DeSpawn(spawnCancelToken);
     }
 
     /// <summary>
