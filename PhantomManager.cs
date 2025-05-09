@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -7,44 +9,63 @@ using UObj = UnityEngine.Object;
 namespace InnerEigong;
 
 /// <summary>
-/// Manages the phantom clone of a monster.
+/// Manages the <see cref="Phantom">phantom</see> clone of a <see cref="MonsterBase">monster</see>.
 /// </summary>
 internal static class PhantomManager {
-    private static Phantom _phantom;
+    private static List<Phantom> _phantoms;
 
     /// <summary>
-    /// Initialize the phantom manager.
+    /// Initialize the <see cref="PhantomManager">phantom manager</see>.
     /// </summary>
-    /// <param name="refObj">A reference object that the phantom will be a clone of and that it will spawn to.</param>
-    internal static void Initialize(GameObject refObj) {
-        var phantomObj = UObj.Instantiate(refObj, refObj.transform.position, Quaternion.identity);
-        _phantom = phantomObj.AddComponent<Phantom>();
+    /// <param name="refObj">A reference <see cref="GameObject">game object</see> that the <see cref="Phantom">phantom</see> will be a clone of and that it will spawn to.</param>
+    /// <param name="numPhantoms">The number of <see cref="Phantom">phantoms</see> to spawn.</param>
+    internal static void Initialize(GameObject refObj, int numPhantoms = 1) {
+        _phantoms = new List<Phantom>(numPhantoms);
+        for (var i = 0; i < numPhantoms; i++) {
+            var phantomObj = UObj.Instantiate(refObj, refObj.transform.position, Quaternion.identity);
+            phantomObj.SetActive(false);
+            var phantom = phantomObj.TryGetCompOrAdd<Phantom>();
+            phantom.ScrambleGuid(i);
+            phantomObj.SetActive(true);
+            _phantoms.Add(phantom);
+        }
     }
 
-    private static CancellationTokenSource _spawnCancelSrc;
+    private static List<CancellationTokenSource> _spawnCancelSrcs = [];
 
     /// <summary>
-    /// Spawn a phantom.
+    /// Spawn <see cref="Phantom">phantoms</see> at the reference <see cref="MonsterBase">monster</see>.
     /// </summary>
-    /// <param name="refMonster">The monster to spawn the phantom at.</param>
-    /// <param name="spawnDelaySec">The duration in seconds before which the phantom will actually spawn.</param>
-    /// <returns></returns>
-    internal static async UniTask SpawnPhantom(MonsterBase refMonster, float spawnDelaySec = 0.25f) {
-        if (_spawnCancelSrc == null) {
-            _spawnCancelSrc = new CancellationTokenSource();
+    /// <param name="refMonster">The <see cref="MonsterBase">monster</see> to spawn the <see cref="Phantom">phantom</see> at.</param>
+    /// <param name="spawnLengthSec">The duration in seconds that the <see cref="Phantom">phantoms</see> will spawn for.</param>
+    internal static async UniTask SpawnPhantoms(MonsterBase refMonster, float spawnLengthSec = 0.25f) {
+        var spawnInterval = spawnLengthSec / _phantoms.Count;
+        _spawnCancelSrcs ??= new List<CancellationTokenSource>(_phantoms.Count);
+        
+        List<UniTask> spawnTasks = new(_phantoms.Count);
+        for (var i = 0; i < _phantoms.Count; i++) {
+            var phantom = _phantoms[i];
+            CancellationTokenSource spawnCancelSrc;
+            if (_spawnCancelSrcs.Count > i) {
+                spawnCancelSrc = _spawnCancelSrcs[i];
+                if (spawnCancelSrc != null) {
+                    spawnCancelSrc.Cancel();
+                    _spawnCancelSrcs.Remove(spawnCancelSrc);
+                }   
+            }
+            spawnCancelSrc = new CancellationTokenSource();
+            _spawnCancelSrcs.Insert(i, spawnCancelSrc);
             try {
-                await _phantom.Spawn(refMonster, _spawnCancelSrc.Token, spawnDelaySec);
+                spawnTasks.Add(phantom.Spawn(refMonster, spawnCancelSrc.Token, spawnInterval));
+            } catch (OperationCanceledException) {
+                spawnCancelSrc.Cancel();
+                spawnTasks.RemoveAt(i);
+                spawnTasks.Add(phantom.FadeOut(spawnCancelSrc.Token, spawnInterval));
             }
-            catch (OperationCanceledException) {
-                await _phantom.DeSpawn(_spawnCancelSrc.Token);
-            }
-            finally {
-                _spawnCancelSrc = null;
-            }
+            await UniTask.Delay(TimeSpan.FromSeconds(spawnInterval), cancellationToken: spawnCancelSrc.Token);
         }
-        else {
-            _spawnCancelSrc.Cancel();
-            _spawnCancelSrc = null;
-        }
+
+        
+        await UniTask.WhenAll(spawnTasks);
     }
 }

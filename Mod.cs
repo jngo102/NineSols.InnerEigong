@@ -6,11 +6,14 @@ using SceneManager = UnityEngine.SceneManagement.SceneManager;
 
 namespace InnerEigong;
 
+/// <summary>
+/// The main <see href="https://docs.bepinex.dev">BepInEx</see> mod <see href="https://docs.bepinex.dev/articles/dev_guide/plugin_tutorial/index.html">plugin</see>.
+/// </summary>
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 [BepInProcess("NineSols.exe")]
 public class Mod : BaseUnityPlugin {
     /// <summary>
-    /// Static instance of the mod class.
+    /// Static instance of the <see cref="Mod">mod</see> class.
     /// </summary>
     private static Mod _instance;
 

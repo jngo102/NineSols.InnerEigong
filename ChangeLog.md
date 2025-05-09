@@ -1,5 +1,11 @@
 # Inner Eigong Change Log
 
+# [0.2.3] - 2025-05-09
+
+### Changed
+
+- Allow multiple phantoms
+
 ## [0.2.2] - 2025-05-07
 
 ### Changed

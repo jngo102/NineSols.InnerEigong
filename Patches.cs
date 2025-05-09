@@ -1,7 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using HarmonyLib;
 using I2.Loc;
-using UnityEngine;
 
 // ReSharper disable InconsistentNaming
 
@@ -12,28 +11,30 @@ namespace InnerEigong;
 /// </summary>
 internal class InnerEigongPatches {
     /// <summary>
-    /// Add custom behavior to Eigong boss.
-    /// </summary>
+    /// Add <see cref="Eigong">custom behavior</see> to the Eigong boss.
+    /// </summary>  
     [HarmonyPrefix]
     [HarmonyPatch(typeof(StealthGameMonster), "Awake")]
     private static void CheckForEigong(StealthGameMonster __instance) {
         if (__instance.gameObject.name != Constants.BossName) return;
         PhantomManager.Initialize(__instance.gameObject);
-        __instance.AddComp(typeof(Eigong));
+        __instance.TryGetCompOrAdd<Eigong>();
         // __instance.AddComp(typeof(FireTrail));
         // SpriteManager.Initialize(Constants.BossSpritePrefix).Forget();
     }
 
     /// <summary>
-    /// Spawn a phantom on certain attacks.
+    /// Spawn a <see cref="Phantom">phantom</see> on certain attacks.
     /// </summary>
     [HarmonyPostfix]
     [HarmonyPatch(typeof(MonsterBase), nameof(MonsterBase.ChangeStateIfValid), typeof(MonsterBase.States),
         typeof(MonsterBase.States))]
-    private static void SpawnPhantom(MonsterBase __instance) {
+    private static async void CheckSpawnPhantom(MonsterBase __instance) {
         if (__instance.name != Constants.BossName) return;
 #if !DEBUG
-        var rand = new System.Random((int)Time.timeSinceLevelLoad);
+        // In release builds, halve the change that a phantom spawns on certain attacks; always spawn
+        // a phantom during these attacks in debug builds
+        var rand = new System.Random((int)UnityEngine.Time.timeSinceLevelLoad);
         if (rand.Next(2) != 0) return;
 #endif
         var state = __instance.fsm.State;
@@ -41,12 +42,12 @@ internal class InnerEigongPatches {
             state is MonsterBase.States.Attack1 or MonsterBase.States.Attack3 or MonsterBase.States.Attack4
                 or MonsterBase.States.Attack6 or MonsterBase.States.Attack12 or MonsterBase.States.Attack13
                 or MonsterBase.States.Attack18) {
-            PhantomManager.SpawnPhantom(refMonster).Forget();
+            await PhantomManager.SpawnPhantoms(refMonster);
         }
     }
 
     /// <summary>
-    /// Clear fire trail check during teleportation.
+    /// Clear <see cref="FireTrail">fire trail</see> during <see cref="TeleportBinding.Teleport">teleportation</see>.
     /// </summary>
     [HarmonyPrefix]
     [HarmonyPatch(typeof(TeleportBinding), nameof(TeleportBinding.Teleport))]
@@ -56,7 +57,7 @@ internal class InnerEigongPatches {
     }
 
     /// <summary>
-    /// Updates the translation for Eigong's name.
+    /// Updates the <see cref="LocalizationManager.GetTranslation">translation</see> for Eigong's name.
     /// </summary>
     /// <param name="Term">The localization key term.</param>
     /// <param name="__result">The output string.</param>
@@ -83,7 +84,7 @@ internal class InnerEigongPatches {
 
 #if DEBUG
     /// <summary>
-    /// Force invincibility for debug purposes.
+    /// <see cref="Health.BecomeInvincible">Force invincibility</see> for debug purposes.
     /// </summary>
     [HarmonyPostfix]
     [HarmonyPatch(typeof(Health), nameof(Health.RemoveInvincible))]
