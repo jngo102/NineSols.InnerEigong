@@ -1,6 +1,6 @@
 # Inner Eigong Change Log
 
-# [0.2.3] - 2025-05-09
+## [0.2.3] - 2025-05-09
 
 ### Changed
 
