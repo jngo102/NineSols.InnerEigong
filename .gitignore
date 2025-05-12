@@ -42,6 +42,8 @@ msbuild.log
 msbuild.err
 msbuild.wrn
 
+Assets/Assets*
+Assets/*.manifest
 global.json
 References/
 Version.txt
