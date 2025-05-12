@@ -87,7 +87,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <EmbeddedResource Condition="$([MSBuild]::IsOSPlatform('OSX'))" Include="Assets\innereigongmac"/>
+        <EmbeddedResource Condition="$([MSBuild]::IsOSPlatform('OSX'))" Include="Assets\innereigongosx"/>
         <EmbeddedResource Condition="$([MSBuild]::IsOSPlatform('Windows'))" Include="Assets\innereigongwin"/>
     </ItemGroup>
 </Project>
