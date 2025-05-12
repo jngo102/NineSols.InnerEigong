@@ -16,7 +16,7 @@ jobs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       mod_name: ${{ steps.get_mod_name.outputs.mod_name }}
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Get C# project file
@@ -61,6 +61,17 @@ jobs:
           body: ${{ steps.get_changelog.outputs.body }}
           draft: false
           prerelease: false
+
+      - name: Get references
+        run: |
+          wget ${{ secrets.REFERENCES_LINK }} -O References.zip
+          unzip References.zip -d References
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: References
+          path: References
   build_and_publish:
     name: Build and Publish
     needs: setup_release
@@ -73,18 +84,16 @@ jobs:
           ]
     runs-on: ${{ matrix.os.version }}
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Download references artifact
+        uses: actions/download-artifact@v4
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 9
-
-      - name: Get References
-        run: |
-          wget ${{ secrets.REFERENCES_LINK }} -O References.zip
-          unzip References.zip -d References
 
       - name: Restore packages
         run: dotnet restore
