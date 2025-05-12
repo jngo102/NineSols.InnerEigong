@@ -1,4 +1,6 @@
-﻿using BepInEx;
+﻿using System.IO;
+using System.Reflection;
+using BepInEx;
 using Cysharp.Threading.Tasks;
 using RCGFSM.Animation;
 using UnityEngine;
@@ -17,8 +19,24 @@ public class Mod : BaseUnityPlugin {
     /// </summary>
     private static Mod _instance;
 
+    /// <summary>
+    /// The <see cref="Texture2D">texture</see> to change the boss's cloak to. 
+    /// </summary>
+    internal static Texture2D CloakTexture { get; private set; }
+
+    /// <summary>
+    /// Color key <see cref="Shader">shader</see> that will be applied to all <see cref="SpriteRenderer">sprite renderers</see> on the boss.
+    /// </summary>
+    internal static Shader ColorKeyShader { get; private set; }
+    
+    /// <summary>
+    /// Color key <see cref="Material">material</see> that will be applied to all <see cref="SpriteRenderer">sprite renderers</see> on the boss.
+    /// </summary>
+    internal static Material ColorKeyMaterial { get; private set; }
+
     private void Awake() {
         _instance = this;
+        LoadAssets();
         PatchManager.Patch();
     }
 
@@ -46,6 +64,22 @@ public class Mod : BaseUnityPlugin {
 
     private void OnApplicationQuit() {
         PatchManager.Unpatch();
+    }
+
+    /// <summary>
+    /// Load all assets in the embedded innereigong asset bundle.
+    /// </summary>
+    private static void LoadAssets() {
+        var assembly = Assembly.GetExecutingAssembly();
+        foreach (var resourceName in assembly.GetManifestResourceNames()) {
+            using var stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null) continue;
+
+            var bundle = AssetBundle.LoadFromStream(stream);
+            CloakTexture = bundle.LoadAsset<Texture2D>("CloakTexture");
+            ColorKeyShader = bundle.LoadAsset<Shader>("_2dxFX_ColorKeyOverlay");
+            ColorKeyMaterial = bundle.LoadAsset<Material>("_2dxFX_ColorKeyOverlay");
+        }
     }
 
     /// <summary>

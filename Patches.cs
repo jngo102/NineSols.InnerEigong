@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using HarmonyLib;
 using I2.Loc;
+using UnityEngine;
 
 // ReSharper disable InconsistentNaming
 
@@ -19,6 +20,13 @@ internal class InnerEigongPatches {
         if (__instance.gameObject.name != Constants.BossName) return;
         PhantomManager.Initialize(__instance.gameObject);
         __instance.TryGetCompOrAdd<Eigong>();
+        foreach (var color in __instance.GetComponentsInChildren<_2dxFX_ColorRGB>(true)) {
+            Object.Destroy(color);
+            var overlayer = color.TryGetCompOrAdd<ColorKeyOverlayer>();
+            overlayer.OverlayScale = 100;
+            overlayer.Tolerance = 0.1f;
+            overlayer.Smoothing = 0.1f;
+        }
         // __instance.AddComp(typeof(FireTrail));
         // SpriteManager.Initialize(Constants.BossSpritePrefix).Forget();
     }

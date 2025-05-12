@@ -1,5 +1,11 @@
 # Inner Eigong Change Log
 
+## [0.2.4] - 2025-05-11
+
+### Added
+
+- Cosmic cloak texture
+
 ## [0.2.3] - 2025-05-09
 
 ### Changed
