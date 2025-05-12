@@ -2,14 +2,14 @@ name: Build and Release
 
 on:
   push:
-    branches: main
+    branches: [main]
   pull_request:
 
 env:
   ARTIFACT_NAME: build-artifact
 
 jobs:
-  release:
+  setup_release:
     name: Create release
     runs-on: ubuntu-latest
     outputs:
@@ -19,46 +19,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 9
-
-      - name: Get References
-        run: |
-          wget ${{ secrets.REFERENCES_LINK }} -O References.zip
-          unzip References.zip -d References
-
-      - name: Restore packages
-        run: dotnet restore
-
-      - name: Build project
-        run: dotnet build --configuration Release
+      - name: Get C# project file
+        id: get_project_file
+        run: echo "csproj=$(find . -iname *.csproj | head -1)" >> $GITHUB_OUTPUT  
 
       - name: Get mod name
         id: get_mod_name
         run: |
-          csproj_file=$(find . -iname *.csproj | head -1)
           tag=AssemblyName
-          mod_name=$(grep --only-matching --perl-regexp "<$tag>\K.*(?=</$tag>)" $csproj_file)
-          echo "mod_name=$mod_name" >> $GITHUB_OUTPUT
+          mod_name=$(grep --only-matching --perl-regexp "<$tag>\K.*(?=</$tag>)" ${{ steps.get_project_file.outputs.csproj }})
+          echo "mod_name=$mod_name" >> $GITHUB_OUTPUT 
 
-      - name: Generate mod path
-        id: gen_mod_path
-        run: echo "path=bin/Release/net48/${{ steps.get_mod_name.outputs.mod_name }}" >> $GITHUB_OUTPUT
-
-      - name: Upload artifact
-        id: upload_artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.ARTIFACT_NAME }}
-          path: |
-            ${{ steps.gen_mod_path.outputs.path }}.dll
-            ${{ steps.gen_mod_path.outputs.path }}.pdb
-
-      - name: Get Assembly version
+      - name: Get assembly version
         id: get_version
-        run: echo "version=$(cat Version.txt)" >> $GITHUB_OUTPUT
+        run: |
+          tag=Version
+          version=$(grep --only-matching --perl-regexp "<$tag>\K.*(?=</$tag>)" ${{ steps.get_project_file.outputs.csproj }})
+          echo "version=$version" >> $GITHUB_OUTPUT
 
       - name: Get recent Change Log
         id: get_changelog
@@ -84,8 +61,9 @@ jobs:
           body: ${{ steps.get_changelog.outputs.body }}
           draft: false
           prerelease: false
-  build:
-    needs: release
+  build_and_publish:
+    name: Build and Publish
+    needs: setup_release
     strategy:
       matrix:
         os:
@@ -93,15 +71,26 @@ jobs:
             { version: windows-latest, suffix: Windows, filter: win },
             { version: macos-latest, suffix: macOS, filter: macos },
           ]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}
+          dotnet-version: 9
+
+      - name: Get References
+        run: |
+          wget ${{ secrets.REFERENCES_LINK }} -O References.zip
+          unzip References.zip -d References
+
+      - name: Restore packages
+        run: dotnet restore
+
+      - name: Build project
+        run: dotnet build --configuration Release
 
       - name: Package with BepInEx
         id: package
@@ -109,12 +98,13 @@ jobs:
           DOWNLOAD_URL=$(curl --request GET https://api.github.com/repos/BepInEx/BepInEx/releases/latest | jq -r '.assets[] | select(.name | contains("${{ matrix.os.filter }}_x64")) | .browser_download_url')
           wget $DOWNLOAD_URL -O BepInEx.zip
           unzip BepInEx.zip -d BepInEx
-          PLUGINS_PATH=BepInEx/BepInEx/plugins
-          mkdir -p $PLUGINS_PATH
-          ARTIFACT_PATH=${{ needs.release.outputs.mod_name }}
-          mv $ARTIFACT_PATH.dll $ARTIFACT_PATH.pdb ReadMe.md $PLUGINS_PATH
+          MOD_NAME=${{ needs.setup_release.outputs.mod_name }}
+          PLUGIN_PATH=BepInEx/BepInEx/plugins/$MOD_NAME
+          mkdir -p $PLUGIN_PATH
+          ARTIFACT_PATH=${{ needs.setup_release.outputs.mod_name }}
+          mv $MOD_NAME.dll $MOD_NAME.pdb ReadMe.md $PLUGIN_PATH
           cd BepInEx
-          ZIP_FILE=${{ needs.release.outputs.mod_name }}_${{ matrix.os.suffix }}.zip
+          ZIP_FILE=${{ needs.setup_release.outputs.mod_name }}_${{ matrix.os.suffix }}.zip
           zip -r $ZIP_FILE *
           echo "zipfile=BepInEx/$ZIP_FILE" >> $GITHUB_OUTPUT
 
@@ -123,7 +113,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ needs.release.outputs.upload_url }}
+          upload_url: ${{ needs.setup_release.outputs.upload_url }}
           asset_path: ${{ steps.package.outputs.zipfile }}
           asset_name: ${{ steps.package.outputs.zipfile }}
           asset_content_type: application/zip

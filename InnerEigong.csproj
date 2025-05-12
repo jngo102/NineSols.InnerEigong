@@ -5,7 +5,7 @@
         <AssemblyName>InnerEigong</AssemblyName>
         <Description>Makes the true final boss of Nine Sols more difficult.</Description>
         <Copyright>Copyright © 2025 jngo102</Copyright>
-        <Version>0.2.4</Version>
+        <Version>0.2.5</Version>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>latest</LangVersion>
         <RestoreAdditionalProjectSources>
@@ -30,10 +30,6 @@
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <LocalRefs>References</LocalRefs>
     </PropertyGroup>
-
-    <Target Condition="'$(Configuration)' == 'Release'" Name="PublishVersion" AfterTargets="PostBuildEvent">
-        <WriteLinesToFile File="Version.txt" Lines="$(AssemblyVersion)" Overwrite="true" Encoding="UTF-8"/>
-    </Target>
 
     <ItemGroup>
         <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all"/>
@@ -91,6 +87,7 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <EmbeddedResource Condition="$([MSBuild]::IsOSPlatform('Windows'))" Include="Assets\innereigong"/>
+        <EmbeddedResource Condition="$([MSBuild]::IsOSPlatform('OSX'))" Include="Assets\innereigongmac"/>
+        <EmbeddedResource Condition="$([MSBuild]::IsOSPlatform('Windows'))" Include="Assets\innereigongwin"/>
     </ItemGroup>
 </Project>
