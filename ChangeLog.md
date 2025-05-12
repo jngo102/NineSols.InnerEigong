@@ -1,5 +1,11 @@
 # Inner Eigong Change Log
 
+## [0.2.5] - 2025-05-12
+
+### Fixed
+
+- Fixed broken CI builds
+
 ## [0.2.4] - 2025-05-11
 
 ### Added

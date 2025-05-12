@@ -10,7 +10,7 @@ env:
 
 jobs:
   setup_release:
-    name: Create release
+    name: Setup release
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
@@ -66,12 +66,36 @@ jobs:
         run: |
           wget ${{ secrets.REFERENCES_LINK }} -O References.zip
           unzip References.zip -d References
+
+      - name: Get macOS BepInEx
+        run: |
+          DOWNLOAD_URL=$(curl --request GET https://api.github.com/repos/BepInEx/BepInEx/releases/latest | jq -r '.assets[] | select(.name | contains("macos_x64")) | .browser_download_url')
+          wget $DOWNLOAD_URL -O BepInEx_macOS.zip
+          unzip BepInEx_macOS.zip -d BepInEx_macOS
+
+      - name: Get Windows BepInEx
+        run: |
+          DOWNLOAD_URL=$(curl --request GET https://api.github.com/repos/BepInEx/BepInEx/releases/latest | jq -r '.assets[] | select(.name | contains("win_x64")) | .browser_download_url')
+          wget $DOWNLOAD_URL -O BepInEx_Windows.zip
+          unzip BepInEx_Windows.zip -d BepInEx_Windows
       
-      - name: Upload artifacts
+      - name: Upload references artifact
         uses: actions/upload-artifact@v4
         with:
           name: References
           path: References
+
+      - name: Upload macOS BepInEx artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BepInEx_macOS
+          path: BepInEx_macOS
+
+      - name: Upload Windows BepInEx artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BepInEx_Windows
+          path: BepInEx_Windows
   build_and_publish:
     name: Build and Publish
     needs: setup_release
@@ -79,8 +103,8 @@ jobs:
       matrix:
         os:
           [
-            { version: windows-latest, suffix: Windows, filter: win },
-            { version: macos-latest, suffix: macOS, filter: macos },
+            { version: windows-latest, suffix: Windows },
+            { version: macos-latest, suffix: macOS },
           ]
     runs-on: ${{ matrix.os.version }}
     steps:
@@ -89,6 +113,14 @@ jobs:
 
       - name: Download references artifact
         uses: actions/download-artifact@v4
+        with:
+          name: References
+
+      - name: Download ${{ matrix.os.suffix }} artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: BepInEx_${{ matrix.os.suffix }}
+          path: BepInEx
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -104,15 +136,12 @@ jobs:
       - name: Package with BepInEx
         id: package
         run: |
-          DOWNLOAD_URL=$(curl --request GET https://api.github.com/repos/BepInEx/BepInEx/releases/latest | jq -r '.assets[] | select(.name | contains("${{ matrix.os.filter }}_x64")) | .browser_download_url')
-          wget $DOWNLOAD_URL -O BepInEx.zip
-          unzip BepInEx.zip -d BepInEx
           MOD_NAME=${{ needs.setup_release.outputs.mod_name }}
           PLUGIN_PATH=BepInEx/BepInEx/plugins/$MOD_NAME
           mkdir -p $PLUGIN_PATH
-          ARTIFACT_PATH=${{ needs.setup_release.outputs.mod_name }}
+          cd ${{ github.workspace}}/bin/Release/net48
           mv $MOD_NAME.dll $MOD_NAME.pdb ReadMe.md $PLUGIN_PATH
-          cd BepInEx
+          cd ${{ github.workspace }}/BepInEx
           ZIP_FILE=${{ needs.setup_release.outputs.mod_name }}_${{ matrix.os.suffix }}.zip
           zip -r $ZIP_FILE *
           echo "zipfile=BepInEx/$ZIP_FILE" >> $GITHUB_OUTPUT
