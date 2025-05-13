@@ -180,7 +180,7 @@ jobs:
           tar -acf $ZIP_FILE -C BepInEx *
           echo "ZIP FILE???? $ZIP_FILE"
           dir
-          echo "zipfile=$ZIP_FILE" >> $GITHUB_OUTPUT
+          echo "zipfile=./$ZIP_FILE" >> $GITHUB_OUTPUT
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
