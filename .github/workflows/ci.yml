@@ -67,7 +67,7 @@ jobs:
     strategy:
       matrix:
         target: [
-          { name: macos, runtime: osx, suffix: macOS },
+          { name: macos, runtime: osx, suffix: OSX },
           { name: win, runtime: win, suffix: Windows },
         ]
     runs-on: ubuntu-latest
@@ -97,23 +97,12 @@ jobs:
       - name: Build project
         run: dotnet publish --configuration Release --runtime ${{ matrix.target.runtime }}-x64
 
-      - name: Package with BepInEx
-        id: package
-        run: |
-          MOD_NAME=${{ needs.setup_release.outputs.mod_name }}
-          PUBLISH_PATH=bin/Release/net48/${{ matrix.target.runtime }}-x64
-          mv $PUBLISH_PATH/$MOD_NAME.dll $PUBLISH_PATH/$MOD_NAME.pdb ReadMe.md BepInEx/BepInEx/plugins
-          cd BepInEx
-          ZIP_FILE="${MOD_NAME}_${{ matrix.target.name }}.zip"
-          zip -r $ZIP_FILE *
-          echo "zipfile=BepInEx/$ZIP_FILE" >> $GITHUB_OUTPUT
-
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.setup_release.outputs.upload_url }}
-          asset_path: ${{ steps.package.outputs.zipfile }}
-          asset_name: ${{ steps.package.outputs.zipfile }}
+          asset_path: ${{ needs.setup_release.outputs.mod_name }}_${{ matrix.target.suffix }}.zip
+          asset_name: ${{ needs.setup_release.outputs.mod_name }}_${{ matrix.target.suffix }}.zip
           asset_content_type: application/zip
