@@ -136,10 +136,6 @@ jobs:
       - name: Package with BepInEx
         id: package
         run: |
-          MOD_NAME=${{ needs.setup_release.outputs.mod_name }}
-          PLUGIN_PATH=BepInEx/BepInEx/plugins/$MOD_NAME
-          mkdir -p $PLUGIN_PATH
-          mv $MOD_NAME.dll $MOD_NAME.pdb $PLUGIN_PATH
           cd BepInEx
           ZIP_FILE=${{ needs.setup_release.outputs.mod_name }}_${{ matrix.os.suffix }}.zip
           zip -r $ZIP_FILE *
