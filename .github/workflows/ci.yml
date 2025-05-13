@@ -61,30 +61,63 @@ jobs:
           body: ${{ steps.get_changelog.outputs.body }}
           draft: false
           prerelease: false
-  build_and_publish:
-    name: Build and Publish
-    needs: setup_release
-    strategy:
-      matrix:
-        target: [
-          { name: macos, runtime: osx, suffix: OSX },
-          { name: win, runtime: win, suffix: Windows },
-        ]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
 
       - name: Download references
         run: |
           wget ${{ secrets.REFERENCES_LINK }} -O References.zip
           unzip References.zip -d References
 
-      - name: Download BepInEx
+      - name: Download BepInEx (macOS)
         run: |
-          DOWNLOAD_URL=$(curl --request GET https://api.github.com/repos/BepInEx/BepInEx/releases/latest | jq -r '.assets[] | select(.name | contains("${{ matrix.target.name }}_x64")) | .browser_download_url')
-          wget $DOWNLOAD_URL -O BepInEx.zip
-          unzip BepInEx.zip -d BepInEx
+          DOWNLOAD_URL=$(curl --request GET https://api.github.com/repos/BepInEx/BepInEx/releases/latest | jq -r '.assets[] | select(.name | contains("macos_x64")) | .browser_download_url')
+          wget $DOWNLOAD_URL -O BepInEx_OSX.zip
+          unzip BepInEx_OSX.zip -d BepInEx_OSX
+          
+      - name: Download BepInEx (Windows)
+        run: |
+          DOWNLOAD_URL=$(curl --request GET https://api.github.com/repos/BepInEx/BepInEx/releases/latest | jq -r '.assets[] | select(.name | contains("win_x64")) | .browser_download_url')
+          wget $DOWNLOAD_URL -O BepInEx_Windows.zip
+          unzip BepInEx_Windows.zip -d BepInEx_Windows
+          
+      - name: Upload references artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: References
+          path: References
+          
+      - name: Upload BepInEx artifact (macOS)
+        uses: actions/upload-artifact@v4
+        with:
+          name: BepInEx_OSX
+          path: BepInEx_OSX
+          
+      - name: Upload BepInEx artifact (Windows)
+        uses: actions/upload-artifact@v4
+        with:
+          name: BepInEx_Windows
+          path: BepInEx_Windows
+  build_and_publish:
+    name: Build and Publish
+    needs: setup_release
+    strategy:
+      matrix:
+        target: [
+          { runner: macos-latest, runtime: osx, suffix: OSX },
+          { runner: windows-latest, runtime: win, suffix: Windows },
+        ]
+    runs-on: ${{ matrix.target.runner }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download references artifact
+        uses: actions/download-artifact@v4
+
+      - name: Download BepInEx artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: BepInEx_${{ matrix.target.suffix }}
+          path: BepInEx
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -95,7 +128,7 @@ jobs:
         run: dotnet restore
 
       - name: Build project
-        run: dotnet publish --configuration Release --runtime ${{ matrix.target.runtime }}-x64
+        run: dotnet build --configuration Release
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
