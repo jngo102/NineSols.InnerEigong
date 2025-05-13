@@ -96,17 +96,10 @@ jobs:
         with:
           name: BepInEx_Windows
           path: BepInEx_Windows
-  build_and_publish:
-    name: Build and Publish
+  build_and_publish_macos:
+    name: Build and Publish (macOS)
     needs: setup_release
-    strategy:
-      matrix:
-        os:
-          [
-            { version: windows-latest, suffix: Windows },
-            { version: macos-latest, suffix: macOS },
-          ]
-    runs-on: ${{ matrix.os.version }}
+    runs-on: macos-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -116,10 +109,10 @@ jobs:
         with:
           name: References
 
-      - name: Download ${{ matrix.os.suffix }} artifact
+      - name: Download BepInEx artifact
         uses: actions/download-artifact@v4
         with:
-          name: BepInEx_${{ matrix.os.suffix }}
+          name: BepInEx_macOS
           path: BepInEx
 
       - name: Setup .NET
@@ -137,7 +130,54 @@ jobs:
         id: package
         run: |
           cd BepInEx
-          ZIP_FILE=${{ needs.setup_release.outputs.mod_name }}_${{ matrix.os.suffix }}.zip
+          ZIP_FILE=${{ needs.setup_release.outputs.mod_name }}_macOS.zip
+          zip -r $ZIP_FILE *
+          echo "zipfile=BepInEx/$ZIP_FILE" >> $GITHUB_OUTPUT
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.setup_release.outputs.upload_url }}
+          asset_path: ${{ steps.package.outputs.zipfile }}
+          asset_name: ${{ steps.package.outputs.zipfile }}
+          asset_content_type: application/zip
+  build_and_publish_windows:
+    name: Build and Publish (Windows)
+    needs: setup_release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download references artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: References
+
+      - name: Download BepInEx artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: BepInEx_Windows
+          path: BepInEx
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9
+
+      - name: Restore packages
+        run: dotnet restore
+
+      - name: Build project
+        run: dotnet build --configuration Release
+
+      - name: Package with BepInEx
+        id: package
+        run: |
+          cd BepInEx
+          $ZIP_FILE="${{ needs.setup_release.outputs.mod_name }}_Windows.zip"
           zip -r $ZIP_FILE *
           echo "zipfile=BepInEx/$ZIP_FILE" >> $GITHUB_OUTPUT
 
