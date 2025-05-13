@@ -23,19 +23,30 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-        <GamePath>$(MSBuildProjectDirectory)</GamePath>
         <LocalRefs>References</LocalRefs>
+        <BepInExPath>BepInEx/BepInEx</BepInExPath>
+        <PluginDir>$(BepInExPath)/plugins/$(TargetName)</PluginDir>
     </PropertyGroup>
 
     <Target Condition="'$(Configuration)' == 'Debug'" Name="CopyMod" AfterTargets="PostBuildEvent">
-        <Copy SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(PluginsPath)/$(TargetName)"/>
+        <Copy SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb"
+              DestinationFolder="$(PluginsPath)/$(TargetName)"/>
         <Exec Command="steam steam://run/1809540"/>
     </Target>
 
-    <Target Condition="'$(Configuration)' == 'Release'" Name="CopyMod" AfterTargets="PostBuildEvent">
-        <Copy SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb"
-            DestinationFolder="$(GamePath)/BepInEx/BepInEx/plugins/$(TargetName)" />
+    <Target Condition="'$(Configuration)' == 'Release'" Name="PackageMod"
+            AfterTargets="PostBuildEvent">
+        <RemoveDir Condition="Exists('$(PluginDir)')" Directories="$(PluginDir)"/>
+        <MakeDir Directories="$(PluginDir)"/>
+        <Copy SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb;ReadMe.md"
+              DestinationFolder="$(PluginDir)/$(TargetName)"/>
+        <ZipDirectory Condition="$([MSBuild]::IsOSPlatform('OSX'))"
+                      SourceDirectory="BepInEx" DestinationFile="$(TargetName)_OSX.zip"/>
+        <ZipDirectory Condition="$([MSBuild]::IsOSPlatform('Windows'))"
+                      SourceDirectory="BepInEx"
+                      DestinationFile="$(TargetName)_Windows.zip"/>
     </Target>
+
 
     <ItemGroup>
         <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all"/>
@@ -45,7 +56,8 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
-        <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all"/>
+        <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2"
+                          PrivateAssets="all"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -93,7 +105,9 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <EmbeddedResource Condition="$([MSBuild]::IsOSPlatform('OSX'))" Include="Assets\innereigongosx"/>
-        <EmbeddedResource Condition="$([MSBuild]::IsOSPlatform('Windows'))" Include="Assets\innereigongwin"/>
+        <EmbeddedResource Condition="$([MSBuild]::IsOSPlatform('OSX'))"
+                          Include="Assets\innereigongosx"/>
+        <EmbeddedResource Condition="$([MSBuild]::IsOSPlatform('Windows'))"
+                          Include="Assets\innereigongwin"/>
     </ItemGroup>
 </Project>
