@@ -22,14 +22,20 @@
         <PluginsPath>$(GamePath)/BepInEx/plugins</PluginsPath>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <GamePath>$(MSBuildProjectDirectory)</GamePath>
+        <LocalRefs>References</LocalRefs>
+    </PropertyGroup>
+
     <Target Condition="'$(Configuration)' == 'Debug'" Name="CopyMod" AfterTargets="PostBuildEvent">
         <Copy SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb" DestinationFolder="$(PluginsPath)/$(TargetName)"/>
         <Exec Command="steam steam://run/1809540"/>
     </Target>
 
-    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-        <LocalRefs>References</LocalRefs>
-    </PropertyGroup>
+    <Target Condition="'$(Configuration)' == 'Release'" Name="CopyMod" AfterTargets="PostBuildEvent">
+        <Copy SourceFiles="$(TargetPath);$(TargetDir)/$(TargetName).pdb"
+            DestinationFolder="$(GamePath)/BepInEx/BepInEx/plugins/$(TargetName)" />
+    </Target>
 
     <ItemGroup>
         <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all"/>

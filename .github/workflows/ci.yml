@@ -139,9 +139,8 @@ jobs:
           MOD_NAME=${{ needs.setup_release.outputs.mod_name }}
           PLUGIN_PATH=BepInEx/BepInEx/plugins/$MOD_NAME
           mkdir -p $PLUGIN_PATH
-          cd ${{ github.workspace}}/bin/Release/net48
-          mv $MOD_NAME.dll $MOD_NAME.pdb ReadMe.md $PLUGIN_PATH
-          cd ${{ github.workspace }}/BepInEx
+          mv $MOD_NAME.dll $MOD_NAME.pdb $PLUGIN_PATH
+          cd BepInEx
           ZIP_FILE=${{ needs.setup_release.outputs.mod_name }}_${{ matrix.os.suffix }}.zip
           zip -r $ZIP_FILE *
           echo "zipfile=BepInEx/$ZIP_FILE" >> $GITHUB_OUTPUT
