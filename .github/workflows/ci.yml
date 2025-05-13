@@ -178,7 +178,7 @@ jobs:
         run: |
           $ZIP_FILE="${{ needs.setup_release.outputs.mod_name }}_Windows.zip"
           tar -acf $ZIP_FILE -C BepInEx *
-          echo "zipfile=BepInEx/$ZIP_FILE" >> $GITHUB_OUTPUT
+          echo "zipfile=$ZIP_FILE" >> $GITHUB_OUTPUT
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
