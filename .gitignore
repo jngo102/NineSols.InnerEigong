@@ -42,6 +42,8 @@ msbuild.log
 msbuild.err
 msbuild.wrn
 
+Assets/Art/*.kra~
+Assets/Art/*.log
 Assets/Assets*
 Assets/*.manifest
 global.json

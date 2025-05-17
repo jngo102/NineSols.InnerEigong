@@ -16,7 +16,7 @@ internal class InnerEigongPatches {
     /// </summary>  
     [HarmonyPrefix]
     [HarmonyPatch(typeof(StealthGameMonster), "Awake")]
-    private static void CheckForEigong(StealthGameMonster __instance) {
+    private static void ModifyEigong(StealthGameMonster __instance) {
         if (__instance.gameObject.name != Constants.BossName) return;
         PhantomManager.Initialize(__instance.gameObject);
         __instance.TryGetCompOrAdd<Eigong>();
@@ -25,7 +25,7 @@ internal class InnerEigongPatches {
             var overlayer = color.TryGetCompOrAdd<ColorKeyOverlayer>();
             overlayer.OverlayScale = 100;
             overlayer.Tolerance = 0.1f;
-            overlayer.Smoothing = 0.1f;
+            overlayer.Smoothing = 0.05f;
         }
         // __instance.AddComp(typeof(FireTrail));
         // SpriteManager.Initialize(Constants.BossSpritePrefix).Forget();
@@ -92,13 +92,12 @@ internal class InnerEigongPatches {
 
 #if DEBUG
     /// <summary>
-    /// <see cref="Health.BecomeInvincible">Force invincibility</see> for debug purposes.
+    /// Set up <see cref="PlayerHealth">player health</see> so that it automatically and fully heal all injuries when taking damage.
     /// </summary>
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(Health), nameof(Health.RemoveInvincible))]
-    private static void ForceInvincible(Health __instance) {
-        var player = __instance.transform.root.GetComponentInChildren<Player>();
-        if (player) __instance.BecomeInvincible(player);
+    [HarmonyPatch(typeof(PlayerHealth), "Awake")]
+    private static void HealEveryInjury(PlayerHealth __instance) {
+        __instance.OnTakeDamageEvent.AddListener(__instance.GainFull);
     }
 #endif
 }

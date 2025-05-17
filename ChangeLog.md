@@ -1,5 +1,11 @@
 # Inner Eigong Change Log
 
+## [0.3.0] - 2025-05-16
+
+### Added
+
+- Added tracking slashes
+
 ## [0.2.5] - 2025-05-12
 
 ### Fixed

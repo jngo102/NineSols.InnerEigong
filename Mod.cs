@@ -33,6 +33,11 @@ public class Mod : BaseUnityPlugin {
     /// Color key <see cref="Material">material</see> that will be applied to all <see cref="SpriteRenderer">sprite renderers</see> on the boss.
     /// </summary>
     internal static Material ColorKeyMaterial { get; private set; }
+    
+    /// <summary>
+    /// Tracking slashes game object.
+    /// </summary>
+    internal static GameObject TrackingSlashesGameObject { get; private set; }
 
     private void Awake() {
         _instance = this;
@@ -79,6 +84,8 @@ public class Mod : BaseUnityPlugin {
             CloakTexture = bundle.LoadAsset<Texture2D>("CloakTexture");
             ColorKeyShader = bundle.LoadAsset<Shader>("_2dxFX_ColorKeyOverlay");
             ColorKeyMaterial = bundle.LoadAsset<Material>("_2dxFX_ColorKeyOverlay");
+            TrackingSlashesGameObject = bundle.LoadAsset<GameObject>("Tracking Slashes");
+            TrackingSlashesGameObject.AddComponent<TrackingSlashes>();
         }
     }
 

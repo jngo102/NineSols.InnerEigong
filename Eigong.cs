@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+﻿using System;
 using Cysharp.Threading.Tasks;
 using MonsterLove.StateMachine;
 using UnityEngine;
@@ -14,7 +14,7 @@ internal class Eigong : MonoBehaviour {
 
     private void Awake() {
         TryGetComponent(out _monster);
-        _monster.OverrideWanderingIdleTime(0); 
+        _monster.OverrideWanderingIdleTime(0);
         _monster.StartingPhaseIndex = 1;
 
         var monsterCore = _monster.monsterCore;
@@ -81,6 +81,12 @@ internal class Eigong : MonoBehaviour {
 
         _stateMachine = _monster.fsm;
         var runner = _stateMachine.runner;
+        
+        _stateMachine.Changed += state => {
+            if (state != States.Attack3) return;
+            CreateTrackingSlashes();
+            // gameObject.SetActive(false);
+        };
 
         var slowStartFullCombo = _monster.GetState(States.Attack1);
         var teleportToBigWhiteFlash = _monster.GetState(States.Attack2);
@@ -90,7 +96,7 @@ internal class Eigong : MonoBehaviour {
         var slowStartTrailingCombo = _monster.GetState(States.Attack6);
         var teleportToSlowStartTrailingCombo = _monster.GetState(States.Attack7);
         var sheathToRedWhiteWhite = _monster.GetState(States.Attack8);
-        var guardToSlowStartOrTriplePoke= _monster.GetState(States.Attack9);
+        var guardToSlowStartOrTriplePoke = _monster.GetState(States.Attack9);
         var faceAndChargeTalisman = _monster.GetState(States.Attack10);
         var redWhiteWhite = _monster.GetState(States.Attack11);
         var uppercutToFirePillar = _monster.GetState(States.Attack12);
@@ -99,44 +105,47 @@ internal class Eigong : MonoBehaviour {
         var chargeToTurnTalisman = _monster.GetState(States.Attack15);
         var faceTalisman = _monster.GetState(States.Attack16);
         var overheadToIssenSlashOrTalisman = _monster.GetState(States.Attack17);
-        var farTeleportToChargeTalisman= _monster.GetState(States.Attack18);
+        var farTeleportToChargeTalisman = _monster.GetState(States.Attack18);
         var teleportToBigRedCut = _monster.GetState(States.Attack19);
         var bigWhiteFlash = _monster.GetState(States.Attack20);
-        
-        foreach (var groupSequence in GetComponentsInChildren<MonsterStateGroupSequence>(true)) {
-            var attackSequences = groupSequence.AttackSequence;
-            foreach (var attackSequence in attackSequences) {
-                attackSequence.setting.queue = [slowStartFullCombo, issenSlash, redWhiteWhite];   
-            }
-            groupSequence.AttackSequence = attackSequences;
-        }
 
-        var attackSequencer = _monster.monsterCore.attackSequenceMoodule;
-        var phaseSequencesField = attackSequencer.GetType()
-            .GetField("SequenceForDifferentPhase", BindingFlags.Instance | BindingFlags.NonPublic);
-        if (phaseSequencesField != null) {
-            var phaseSequences = (MonsterStateSequenceWeight[])phaseSequencesField.GetValue(attackSequencer);
-            foreach (var phaseSequence in phaseSequences) {
-                foreach (var groupSequence in phaseSequence.setting.queue) {
-                    var attackSequences = groupSequence.AttackSequence;
-                    foreach (var attackSequence in attackSequences) {
-                        var setting = attackSequence.setting;
-                        setting.queue = [slowStartFullCombo, issenSlash, redWhiteWhite];
-                        attackSequence.setting = setting;
-                    }
+        // foreach (var groupSequence in GetComponentsInChildren<MonsterStateGroupSequence>(true)) {
+        //     var attackSequences = groupSequence.AttackSequence;
+        //     foreach (var attackSequence in attackSequences) {
+        //         attackSequence.setting.queue = [slowStartFullCombo, issenSlash, redWhiteWhite];   
+        //     }
+        //     groupSequence.AttackSequence = attackSequences;
+        // }
+        //
+        // var attackSequencer = _monster.monsterCore.attackSequenceMoodule;
+        // var phaseSequencesField = attackSequencer.GetType()
+        //     .GetField("SequenceForDifferentPhase", BindingFlags.Instance | BindingFlags.NonPublic);
+        // if (phaseSequencesField != null) {
+        //     var phaseSequences = (MonsterStateSequenceWeight[])phaseSequencesField.GetValue(attackSequencer);
+        //     foreach (var phaseSequence in phaseSequences) {
+        //         foreach (var groupSequence in phaseSequence.setting.queue) {
+        //             var attackSequences = groupSequence.AttackSequence;
+        //             foreach (var attackSequence in attackSequences) {
+        //                 var setting = attackSequence.setting;
+        //                 setting.queue = [slowStartFullCombo, issenSlash, redWhiteWhite];
+        //                 attackSequence.setting = setting;
+        //             }
+        //
+        //             groupSequence.AttackSequence = attackSequences;
+        //         }
+        //     }    
+        //     phaseSequencesField.SetValue(attackSequencer, phaseSequences);
+        // }
 
-                    groupSequence.AttackSequence = attackSequences;
-                }
-            }    
-            phaseSequencesField.SetValue(attackSequencer, phaseSequences);
-        }
-        
-        
         ModifyStates();
     }
 
+    private void CreateTrackingSlashes() {
+        Mod.Log("CREATE TRACKING SLASHES");
+        var trackingSlashes = Instantiate(Mod.TrackingSlashesGameObject);
+    }
+
     private void ModifyStates() {
-        foreach (var state in GetComponentsInChildren<BossGeneralState>(true)) {
-        }
+        foreach (var state in GetComponentsInChildren<BossGeneralState>(true)) { }
     }
 }

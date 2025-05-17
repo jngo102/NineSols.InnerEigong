@@ -2,6 +2,7 @@
 using System.Reflection;
 using Cysharp.Threading.Tasks;
 using System.Threading;
+using HarmonyLib;
 using UnityEngine;
 
 namespace InnerEigong;
@@ -42,9 +43,9 @@ internal class Phantom : MonoBehaviour {
         var random = new System.Random(seed);
         random.NextBytes(bytes);
         var newGuid = new Guid(bytes);
-        guidType.GetField("guid", BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(guid, newGuid);
-        guidType.GetField("serializedGuid", BindingFlags.Instance | BindingFlags.NonPublic)
-            ?.SetValue(guid, newGuid.ToByteArray());
+        var guidTraverse = Traverse.Create(guidType);
+        guidTraverse.Field<Guid>("guid").Value = newGuid;
+        guidTraverse.Field<byte[]>("serializedGuid").Value = newGuid.ToByteArray();
         guid.Invoke("CreateGuid", 0);
     }
 
